@@ -1,10 +1,16 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { ethers } from "ethers";
+import { ABI } from "../../utils/ABI";
 
 const WalletContext = createContext();
 
 export const WalletProvider = ({ children }) => {
     const [isConnected, setIsConnected] = useState(false);
     const [account, setAccount] = useState(null);
+    const [provider, setProvider] = useState(null);
+    const [contract, setContract] = useState(null);
+
+    const contractAddress = process.env.NEXT_PUBLIC_TODO_CONTRACT_ADDRESS;
 
     const handleAccountsChanged = (accounts) => {
         if (accounts.length > 0) {
@@ -17,35 +23,45 @@ export const WalletProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        const checkMetaMask = async () => {
+        const initializeConnection = async () => {
             if (window.ethereum) {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                const accounts = await window.ethereum.request({ method: "eth_accounts" });
                 if (accounts.length > 0) {
-                    setIsConnected(true);
+                    const ethersProvider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = ethersProvider.getSigner();
+                    const contractInstance = new ethers.Contract(contractAddress, ABI, signer);
+                    setProvider(ethersProvider);
+                    setContract(contractInstance);
                     setAccount(accounts[0]);
+                    setIsConnected(true);
                 }
             }
         };
 
-        checkMetaMask();
+        initializeConnection();
 
         if (window.ethereum) {
-            window.ethereum.on('accountsChanged', handleAccountsChanged);
+            window.ethereum.on("accountsChanged", handleAccountsChanged);
         }
 
         return () => {
             if (window.ethereum && handleAccountsChanged) {
-                window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+                window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
             }
         };
-    }, []);
+    }, [contractAddress]);
 
     const connectMetaMask = async () => {
         if (window.ethereum) {
             try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                setIsConnected(true);
+                const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                const ethersProvider = new ethers(window.ethereum);
+                const signer = ethersProvider.getSigner();
+                const contractInstance = new ethers.Contract(contractAddress, ABI, signer);
+                setProvider(ethersProvider);
+                setContract(contractInstance);
                 setAccount(accounts[0]);
+                setIsConnected(true);
             } catch (error) {
                 console.error("Error connecting to MetaMask", error);
             }
@@ -57,10 +73,12 @@ export const WalletProvider = ({ children }) => {
     const disconnectWallet = () => {
         setIsConnected(false);
         setAccount(null);
+        setProvider(null);
+        setContract(null);
     };
 
     return (
-        <WalletContext.Provider value={{ isConnected, account, connectMetaMask, disconnectWallet }}>
+        <WalletContext.Provider value={{ isConnected, account, provider, contract, connectMetaMask, disconnectWallet }}>
             {children}
         </WalletContext.Provider>
     );
