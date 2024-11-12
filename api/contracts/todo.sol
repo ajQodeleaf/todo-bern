@@ -9,7 +9,7 @@ contract ToDo {
     }
 
     address public owner;
-    mapping(uint => Task) tasks; // Stores tasks
+    mapping(uint => Task) tasks;
     uint taskId = 1;
 
     event taskCreate(uint taskId, string name);
