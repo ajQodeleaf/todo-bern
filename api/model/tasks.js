@@ -1,7 +1,7 @@
 const { contract } = require('../contracts/contract')
 
 const dateclashCheck = async (taskDate) => {
-    const tasks = await contract.methods.allTask().call();
+    const tasks = await contract.allTask();
     const foundTask = tasks.find(task => task.date === taskDate);
 
     if (foundTask) {
@@ -11,7 +11,7 @@ const dateclashCheck = async (taskDate) => {
 }
 
 const priorityCheck = async (id) => {
-    const tasks = await contract.methods.allTask().call();
+    const tasks = await contract.allTask();
     const result = tasks[id - 1].name.includes("priority")
     return result;
 }
