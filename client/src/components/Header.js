@@ -1,4 +1,3 @@
-// Header.js
 'use client';
 import { Box, Flex, HStack, Button, Spacer } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
